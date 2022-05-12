@@ -54,7 +54,7 @@ public class AccountsRepositoryInMemory implements AccountsRepository {
 	 * @param transferFunds
 	 */
 	@Override
-	public void fundsTransferBetweenAccts(TransferFunds transferFunds) {
+	public void fundsTransferBetweenAccts(TransferFunds transferFunds) throws Exception {
 		
 		// Validating if the From Acct and To Acct exists. If both, or any of the accounts doesn't exist, Funds Transfer can't be done, hence throw AccountDoesntExistException
 		if (!accounts.containsKey(transferFunds.getFromAcctId()) &  !accounts.containsKey(transferFunds.getToAcctId())) {

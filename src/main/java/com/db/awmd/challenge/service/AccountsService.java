@@ -34,8 +34,9 @@ public class AccountsService {
 	 * This Service Layer Method calls Repository Layer to fulfill fundsTransferBetweenAccts functionality.
 	 * 
 	 * @param transferFunds
+	 * @throws Exception 
 	 */
-	public void fundsTransferBetweenAccts(TransferFunds transferFunds) {
+	public void fundsTransferBetweenAccts(TransferFunds transferFunds) throws Exception {
 		this.accountsRepository.fundsTransferBetweenAccts(transferFunds);
 	}
 }

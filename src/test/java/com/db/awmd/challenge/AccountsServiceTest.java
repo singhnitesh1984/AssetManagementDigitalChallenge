@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import com.db.awmd.challenge.domain.Account;
+import com.db.awmd.challenge.domain.TransferFunds;
+import com.db.awmd.challenge.exception.AccountDoesntExistException;
 import com.db.awmd.challenge.exception.DuplicateAccountIdException;
 import com.db.awmd.challenge.service.AccountsService;
 import java.math.BigDecimal;
@@ -43,4 +45,42 @@ public class AccountsServiceTest {
     }
 
   }
+  
+  	@Test
+	public void fundsTransferBetweenAccts() throws Exception {
+
+		Account fromAcct = new Account("123123123", new BigDecimal(1000));
+		Account toAcct = new Account("234234234", new BigDecimal(800));
+
+		this.accountsService.createAccount(fromAcct);
+		this.accountsService.createAccount(toAcct);
+
+		TransferFunds transferFunds = new TransferFunds("123123123", "234234234", new BigDecimal(200));
+
+		this.accountsService.fundsTransferBetweenAccts(transferFunds);
+		assertThat(this.accountsService.getAccount(transferFunds.getFromAcctId()).equals(fromAcct.getAccountId()));
+		assertThat(this.accountsService.getAccount(transferFunds.getToAcctId()).equals(toAcct.getAccountId()));
+			
+	}
+  	
+  	@Test
+	public void fundsTransferBetweenAccts_AccountDoesntExistException() throws Exception {
+
+		Account fromAcct = new Account("345345345", new BigDecimal(1000));
+		Account toAcct = new Account("456456456", new BigDecimal(800));
+
+		this.accountsService.createAccount(fromAcct);
+		this.accountsService.createAccount(toAcct);
+
+		TransferFunds transferFunds = new TransferFunds("345", "456456456", new BigDecimal(200));
+
+		try {
+			this.accountsService.fundsTransferBetweenAccts(transferFunds);
+			//fail("AccountDoesntExistException");
+		} catch (AccountDoesntExistException ex) {
+			assertThat(ex instanceof AccountDoesntExistException);
+		}
+
+	}
+  	
 }

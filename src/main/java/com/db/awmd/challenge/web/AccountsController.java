@@ -73,7 +73,7 @@ public class AccountsController {
 	 * @return ResponseEntity<Object>
 	 */
 	@PostMapping(path = "/{fundsTransferBetweenAccts}", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Object> fundsTransferBetweenAccts(@RequestBody @Valid TransferFunds transferFunds) {
+	public ResponseEntity<Object> fundsTransferBetweenAccts(@RequestBody @Valid TransferFunds transferFunds) throws Exception {
 		
 		log.info(INITIATING_TRANSFER_STR, transferFunds.getFromAcctId(),
 				transferFunds.getToAcctId());
