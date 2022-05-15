@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -98,6 +99,25 @@ public class AccountsServiceTest {
 			this.accountsService.fundsTransferBetweenAccts(transferFunds);
 		} catch (FundsTransferException ex) {
 			assertThat(ex instanceof FundsTransferException);
+		}
+
+	}
+  	
+  	@Test
+	public void fundsTransferBetweenAccts_NegativeFundsTransfer() throws Exception {
+
+		Account fromAcct = new Account("789789789", new BigDecimal(500));
+		Account toAcct = new Account("890890890", new BigDecimal(500));
+
+		this.accountsService.createAccount(fromAcct);
+		this.accountsService.createAccount(toAcct);
+
+		TransferFunds transferFunds = new TransferFunds("789789789", "890890890", new BigDecimal(-200));
+
+		try {
+			this.accountsService.fundsTransferBetweenAccts(transferFunds);
+		} catch (MethodArgumentNotValidException ex) {
+			assertThat(ex instanceof MethodArgumentNotValidException);
 		}
 
 	}
