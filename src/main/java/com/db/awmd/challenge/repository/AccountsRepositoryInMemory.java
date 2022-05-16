@@ -14,7 +14,7 @@ public class AccountsRepositoryInMemory implements AccountsRepository {
 	
 	private static org.slf4j.Logger log = LoggerFactory.getLogger(AccountsRepositoryInMemory.class);
 	
-	public final Map<String, Account> accounts = new ConcurrentHashMap<>();
+	private final Map<String, Account> accounts = new ConcurrentHashMap<>();
 	
 	@Override
 	public void createAccount(Account account) throws DuplicateAccountIdException {

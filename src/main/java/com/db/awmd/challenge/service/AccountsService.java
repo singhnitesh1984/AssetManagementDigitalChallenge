@@ -1,7 +1,6 @@
 package com.db.awmd.challenge.service;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import com.db.awmd.challenge.exception.AccountDoesntExistException;
 import com.db.awmd.challenge.exception.DuplicateAccountIdException;
 import com.db.awmd.challenge.exception.FundsTransferException;
 import com.db.awmd.challenge.repository.AccountsRepository;
-import com.db.awmd.challenge.repository.AccountsRepositoryInMemory;
 
 import lombok.Getter;
 
@@ -41,9 +39,6 @@ public class AccountsService {
 	private final AccountsRepository accountsRepository;
 	
 	@Getter
-	private final AccountsRepositoryInMemory accountsRepositoryInMemory;
-	
-	@Getter
 	private final EmailNotificationService emailNotificationService;
 	
 	public AccountsRepository getAccountsRepository() {
@@ -51,9 +46,8 @@ public class AccountsService {
 	}
 
 	@Autowired
-	public AccountsService(AccountsRepository accountsRepository, AccountsRepositoryInMemory accountsRepositoryInMemory, EmailNotificationService emailNotificationService) {
+	public AccountsService(AccountsRepository accountsRepository, EmailNotificationService emailNotificationService) {
 		this.accountsRepository = accountsRepository;
-		this.accountsRepositoryInMemory = accountsRepositoryInMemory;
 		this.emailNotificationService = emailNotificationService;
 	}
 	
@@ -74,23 +68,21 @@ public class AccountsService {
 	 */
 	public void fundsTransferBetweenAccts(TransferFunds transferFunds) throws Exception {
 		
-		// Repository call will go heare to fetch accounts information
-		Map<String, Account> accounts = this.accountsRepositoryInMemory.accounts;
-		
 		// Validating if the From Acct and To Acct exists. If both, or any of the accounts doesn't exist, Funds Transfer can't be done, hence throw AccountDoesntExistException
-		if (!accounts.containsKey(transferFunds.getFromAcctId()) &  !accounts.containsKey(transferFunds.getToAcctId())) {
+		// Validating and throwing DuplicateAccountIdException if From Acct and To Acct both are same. Can.'t transfer funds within same account.
+		if (this.accountsRepository.getAccount(transferFunds.getFromAcctId()) == null & this.accountsRepository.getAccount(transferFunds.getToAcctId()) == null) {
 			throw new AccountDoesntExistException(FROM_ACCT_STR + transferFunds.getFromAcctId() + AND_STR + TO_ACCT_STR + transferFunds.getToAcctId() + ACCT_DOESNT_EXIST_STR);
-		} else if (!accounts.containsKey(transferFunds.getFromAcctId())) {
+		} else if (this.accountsRepository.getAccount(transferFunds.getFromAcctId()) == null) {
 			throw new AccountDoesntExistException(FROM_ACCT_STR + transferFunds.getFromAcctId() + ACCT_DOESNT_EXIST_STR);
-		} else if (!accounts.containsKey(transferFunds.getToAcctId())) {
+		} else if (this.accountsRepository.getAccount(transferFunds.getToAcctId()) == null) {
 			throw new AccountDoesntExistException(TO_ACCT_STR + transferFunds.getToAcctId() + ACCT_DOESNT_EXIST_STR);
-		} if (transferFunds.getFromAcctId().equals(transferFunds.getToAcctId())) {
+		} else if (transferFunds.getFromAcctId().equals(transferFunds.getToAcctId())) {
 			throw new DuplicateAccountIdException(CANT_TRANSFER_WITHIN_SAME_ACCT_STR + transferFunds.getFromAcctId());
 		}
-		// When From Acct and To Acct exists, continue with Funds Transfer.
+		// When From Acct and To Acct exists and are not the same, then continue with Funds Transfer.
 		else {
-			Account fromAcct = accounts.get(transferFunds.getFromAcctId());
-			Account toAcct = accounts.get(transferFunds.getToAcctId());
+			Account fromAcct = this.accountsRepository.getAccount(transferFunds.getFromAcctId());
+			Account toAcct = this.accountsRepository.getAccount(transferFunds.getToAcctId());
 			log.info(BALANCE_STR1 + BALANCE_BEFORE_STR, fromAcct.getAccountId(), fromAcct.getBalance(), toAcct.getAccountId(), toAcct.getBalance());
 			
 			BigDecimal transferAmt = transferFunds.getTransferAmt();
