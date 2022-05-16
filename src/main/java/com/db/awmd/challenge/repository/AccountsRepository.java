@@ -12,6 +12,6 @@ public interface AccountsRepository {
 
   void clearAccounts();
 
-  void fundsTransferBetweenAccts(TransferFunds transferFunds) throws Exception;
+  //void fundsTransferBetweenAccts(TransferFunds transferFunds) throws Exception;
   
 }
