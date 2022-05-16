@@ -9,10 +9,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AccountsService {
-
+	
 	@Getter
 	private final AccountsRepository accountsRepository;
-
+	
 	public AccountsRepository getAccountsRepository() {
 		return accountsRepository;
 	}
@@ -21,7 +21,7 @@ public class AccountsService {
 	public AccountsService(AccountsRepository accountsRepository) {
 		this.accountsRepository = accountsRepository;
 	}
-
+	
 	public void createAccount(Account account) {
 		this.accountsRepository.createAccount(account);
 	}
@@ -39,4 +39,5 @@ public class AccountsService {
 	public void fundsTransferBetweenAccts(TransferFunds transferFunds) throws Exception {
 		this.accountsRepository.fundsTransferBetweenAccts(transferFunds);
 	}
+	
 }

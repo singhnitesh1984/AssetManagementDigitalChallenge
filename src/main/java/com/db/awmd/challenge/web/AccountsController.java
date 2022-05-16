@@ -31,19 +31,14 @@ public class AccountsController {
 
 	private static org.slf4j.Logger log = LoggerFactory.getLogger(AccountsController.class);
 	
-	private final EmailNotificationService emailNotificationService;
-
 	private final AccountsService accountsService;
 	
 	// Declaring Constants
-	public static final String TRANSFER_SUCCESSFUL_STR1 = "Funds From Acct ";
-	public static final String TRANSFER_SUCCESSFUL_STR2 = " got transferred successfully to your Acct ";
 	public static final String TRANSFER_FAILURE_STR = "TRANSFER FAILED!! ";
 	public static final String INITIATING_TRANSFER_STR = "Initiating fund transfer between accounts {} -> {}";
 	
 	@Autowired
-	public AccountsController(AccountsService accountsService, EmailNotificationService emailNotificationService) {
-		this.emailNotificationService = emailNotificationService;
+	public AccountsController(AccountsService accountsService) {
 		this.accountsService = accountsService;
 	}
 
@@ -75,41 +70,19 @@ public class AccountsController {
 	@PostMapping(path = "/{fundsTransferBetweenAccts}", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Object> fundsTransferBetweenAccts(@RequestBody @Valid TransferFunds transferFunds) throws Exception {
 		
-		log.info(INITIATING_TRANSFER_STR, transferFunds.getFromAcctId(),
-				transferFunds.getToAcctId());
-		
-		StringBuilder transferMsg = null;
-
+		log.info(INITIATING_TRANSFER_STR, transferFunds.getFromAcctId(), transferFunds.getToAcctId());
 		try {
 			// Initiating fundsTransferBetweenAccts
 			this.accountsService.fundsTransferBetweenAccts(transferFunds);
-			transferMsg = new StringBuilder(TRANSFER_SUCCESSFUL_STR1.concat(transferFunds.getFromAcctId()).concat(TRANSFER_SUCCESSFUL_STR2).concat(transferFunds.getToAcctId()));
-			
 		} catch (AccountDoesntExistException adeex) {
-			transferMsg = new StringBuilder(TRANSFER_FAILURE_STR + adeex.getMessage());
 			log.info(TRANSFER_FAILURE_STR + adeex.getMessage());
 			return new ResponseEntity<>(adeex.getMessage(), HttpStatus.BAD_REQUEST);
 		} catch (FundsTransferException ftex) {
-			transferMsg = new StringBuilder(TRANSFER_FAILURE_STR + ftex.getMessage());
 			log.info(TRANSFER_FAILURE_STR + ftex.getMessage());
 			return new ResponseEntity<>(ftex.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		
-		// Notifying both accounts with funds transfer status in case of successful funds transfer.
-		notifyTransferStatus(transferFunds, transferMsg);
-					
 		return new ResponseEntity<>(HttpStatus.CREATED);
-	}
-
-	/**
-	 * This method contains logic of Notifying both accounts with funds transfer status.
-	 * 
-	 * @param transferFunds
-	 * @param transferMsg
-	 */
-	private void notifyTransferStatus(TransferFunds transferFunds, StringBuilder transferMsg) {
-		emailNotificationService.notifyAboutTransfer(accountsService.getAccount(transferFunds.getFromAcctId()), transferMsg.toString());
-		emailNotificationService.notifyAboutTransfer(accountsService.getAccount(transferFunds.getToAcctId()), transferMsg.toString());
 	}
 
 }

@@ -5,7 +5,7 @@ import com.db.awmd.challenge.domain.TransferFunds;
 import com.db.awmd.challenge.exception.DuplicateAccountIdException;
 
 public interface AccountsRepository {
-
+	
   void createAccount(Account account) throws DuplicateAccountIdException;
 
   Account getAccount(String accountId);

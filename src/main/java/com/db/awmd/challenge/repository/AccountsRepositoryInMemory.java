@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.db.awmd.challenge.domain.Account;
@@ -12,13 +13,21 @@ import com.db.awmd.challenge.domain.TransferFunds;
 import com.db.awmd.challenge.exception.AccountDoesntExistException;
 import com.db.awmd.challenge.exception.DuplicateAccountIdException;
 import com.db.awmd.challenge.exception.FundsTransferException;
+import com.db.awmd.challenge.service.EmailNotificationService;
 
 @Repository
 public class AccountsRepositoryInMemory implements AccountsRepository {
 	
 	private static org.slf4j.Logger log = LoggerFactory.getLogger(AccountsRepositoryInMemory.class);
 	
-	private final Map<String, Account> accounts = new ConcurrentHashMap<>();
+	public final Map<String, Account> accounts = new ConcurrentHashMap<>();
+	
+	private final EmailNotificationService emailNotificationService;
+	
+	@Autowired
+	public AccountsRepositoryInMemory(EmailNotificationService emailNotificationService) {
+		this.emailNotificationService = emailNotificationService;
+	}
 	
 	// Declaring Constants
 	public static final String ACCT_DOESNT_EXIST_STR = " doesn't exists for doing funds transfer.";
@@ -26,9 +35,14 @@ public class AccountsRepositoryInMemory implements AccountsRepository {
 	public static final String TO_ACCT_STR = "To Acct ";
 	public static final String BALANCE_STR1 = "Account's {} Balance is {} and ";
 	public static final String BALANCE_BEFORE_STR = "Account's {} Balance is {} before funds transfer.";
-	public static final String BALANCE_AFTER_STR = "Account's Balance is {} after funds transfer.";
+	public static final String BALANCE_AFTER_STR = "Account's {} Balance is {} after funds transfer.";
 	public static final String INSUFFICIENT_BALANCE_STR = " doesn't have sufficient balance to do funds transfer.";
 	public static final String AND_STR = " and ";
+	public static final String TRANSFER_SUCCESSFUL_STR1 = "Funds From Acct ";
+	public static final String TRANSFER_SUCCESSFUL_STR2 = " got transferred successfully To Acct ";
+	public static final String TRANSFER_FAILURE_STR = "TRANSFER FAILED!! ";
+	public static final String INITIATING_TRANSFER_STR = "Initiating fund transfer between accounts {} -> {}";
+	public static final String CANT_TRANSFER_WITHIN_SAME_ACCT_STR = "Can't transfer funds within same account ";
 
 	@Override
 	public void createAccount(Account account) throws DuplicateAccountIdException {
@@ -63,7 +77,9 @@ public class AccountsRepositoryInMemory implements AccountsRepository {
 			throw new AccountDoesntExistException(FROM_ACCT_STR + transferFunds.getFromAcctId() + ACCT_DOESNT_EXIST_STR);
 		} else if (!accounts.containsKey(transferFunds.getToAcctId())) {
 			throw new AccountDoesntExistException(TO_ACCT_STR + transferFunds.getToAcctId() + ACCT_DOESNT_EXIST_STR);
-		} 
+		} if (transferFunds.getFromAcctId().equals(transferFunds.getToAcctId())) {
+			throw new DuplicateAccountIdException(CANT_TRANSFER_WITHIN_SAME_ACCT_STR + transferFunds.getFromAcctId());
+		}
 		// When From Acct and To Acct exists, continue with Funds Transfer.
 		else {
 			Account fromAcct = accounts.get(transferFunds.getFromAcctId());
@@ -86,9 +102,28 @@ public class AccountsRepositoryInMemory implements AccountsRepository {
 				}
 			}
 			
+			StringBuilder transferMsg = new StringBuilder(TRANSFER_SUCCESSFUL_STR1.concat(transferFunds.getFromAcctId()).concat(TRANSFER_SUCCESSFUL_STR2).concat(transferFunds.getToAcctId()));
+			
+			// Notifying both accounts with funds transfer status in case of successful funds transfer.
+			notifyAcctHoldersForSuccessfulFundsTransfer(transferFunds, transferMsg);
+			
 			log.info(BALANCE_STR1 + BALANCE_AFTER_STR, fromAcct.getAccountId(), fromAcct.getBalance(), toAcct.getAccountId(), toAcct.getBalance());
 		}
+	}
+	
+	/**
+	 * This method contains logic of Notifying both accounts with funds transfer status.
+	 * 
+	 * @param transferFunds
+	 * @param transferMsg
+	 */
+	private void notifyAcctHoldersForSuccessfulFundsTransfer(TransferFunds transferFunds, StringBuilder transferMsg) {
 		
+		// Notifysing From Account Holder.
+		emailNotificationService.notifyAboutTransfer(getAccount(transferFunds.getFromAcctId()), transferMsg.toString());
+		
+		// Notifysing To Account Holder.
+		emailNotificationService.notifyAboutTransfer(getAccount(transferFunds.getToAcctId()), transferMsg.toString());
 	}
 
 }

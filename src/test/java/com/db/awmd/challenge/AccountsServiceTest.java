@@ -103,23 +103,4 @@ public class AccountsServiceTest {
 
 	}
   	
-  	@Test
-	public void fundsTransferBetweenAccts_NegativeFundsTransfer() throws Exception {
-
-		Account fromAcct = new Account("789789789", new BigDecimal(500));
-		Account toAcct = new Account("890890890", new BigDecimal(500));
-
-		this.accountsService.createAccount(fromAcct);
-		this.accountsService.createAccount(toAcct);
-
-		TransferFunds transferFunds = new TransferFunds("789789789", "890890890", new BigDecimal(-200));
-
-		try {
-			this.accountsService.fundsTransferBetweenAccts(transferFunds);
-		} catch (MethodArgumentNotValidException ex) {
-			assertThat(ex instanceof MethodArgumentNotValidException);
-		}
-
-	}
-  	
 }
